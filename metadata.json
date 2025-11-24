@@ -1,0 +1,5 @@
+{
+  "name": "Pondera",
+  "description": "A dual-purpose productivity tool featuring a Smart PDF Annotator for deep study and a Generative Image Editor for creative visuals, powered by Gemini 2.5.",
+  "requestFramePermissions": []
+}
