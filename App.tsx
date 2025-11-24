@@ -4,11 +4,27 @@ import { ChatSidebar } from './components/SidebarAssistant/ChatSidebar';
 import { Bot } from 'lucide-react';
 
 const App: React.FC = () => {
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+  // Initialize theme based on system preference
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
+  });
+  
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
 
   const toggleTheme = () => setIsDarkMode(!isDarkMode);
   const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
+
+  // Sync with system theme changes
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e: MediaQueryListEvent) => setIsDarkMode(e.matches);
+    
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
 
   // Apply dark mode class to the HTML element for global consistency
   useEffect(() => {

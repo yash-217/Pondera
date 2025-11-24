@@ -205,6 +205,19 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ isDarkMode, toggleTheme })
     setIsUploadMenuOpen(false);
   };
 
+  const onDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const droppedFile = e.dataTransfer.files[0];
+      if (droppedFile.type === 'application/pdf') {
+        setFile(droppedFile);
+        resetViewer();
+      } else {
+        alert("Please drop a PDF file.");
+      }
+    }
+  };
+
   const onUrlSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (urlInput.trim()) {
@@ -411,7 +424,16 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ isDarkMode, toggleTheme })
 
   return (
     <div className="flex flex-col h-full bg-slate-50 dark:bg-black transition-colors duration-300 relative">
-      {/* Toolbar */}
+      <input
+        type="file"
+        accept="application/pdf"
+        onChange={onFileChange}
+        className="hidden"
+        ref={fileInputRef}
+      />
+      
+      {/* Toolbar - Only show when file exists */}
+      {file && (
       <div className="h-16 bg-white dark:bg-black border-b border-slate-200 dark:border-neutral-800 flex items-center justify-between px-4 shadow-sm shrink-0 z-50 transition-colors duration-300 relative">
         
         {/* Left Group: Upload & Tools */}
@@ -493,111 +515,99 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ isDarkMode, toggleTheme })
                  )}
                </div>
              )}
-
-             <input
-                type="file"
-                accept="application/pdf"
-                onChange={onFileChange}
-                className="hidden"
-                ref={fileInputRef}
-             />
            </div>
            
-           {file && (
-            <>
-              <div className="h-6 w-px bg-slate-300 dark:bg-neutral-800"></div>
+           <div className="h-6 w-px bg-slate-300 dark:bg-neutral-800"></div>
               
-              {/* Fit Width Toggle */}
-              <button
-                onClick={() => setFitToWidth(!fitToWidth)}
-                className={`p-2 rounded-lg transition-colors ${fitToWidth ? 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300' : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800'}`}
-                title="Fit to Width"
-              >
-                <Maximize size={18} />
-              </button>
+           {/* Fit Width Toggle */}
+           <button
+             onClick={() => setFitToWidth(!fitToWidth)}
+             className={`p-2 rounded-lg transition-colors ${fitToWidth ? 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300' : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800'}`}
+             title="Fit to Width"
+           >
+             <Maximize size={18} />
+           </button>
 
-              {/* Annotate Toggle */}
-              <button
-                onClick={() => setIsDrawingMode(!isDrawingMode)}
-                className={`p-2 rounded-lg transition-colors flex items-center gap-2 ${isDrawingMode ? 'bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300' : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800'}`}
-                title="Annotate"
-              >
-                <PenTool size={18} />
-                {isDrawingMode && <span className="text-xs font-medium hidden md:block">Drawing</span>}
-              </button>
+           {/* Annotate Toggle */}
+           <button
+             onClick={() => setIsDrawingMode(!isDrawingMode)}
+             className={`p-2 rounded-lg transition-colors flex items-center gap-2 ${isDrawingMode ? 'bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300' : 'text-slate-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800'}`}
+             title="Annotate"
+           >
+             <PenTool size={18} />
+             {isDrawingMode && <span className="text-xs font-medium hidden md:block">Drawing</span>}
+           </button>
 
-              {/* Color Palette (Visible only when drawing) */}
-              {isDrawingMode && (
-                <div className={`
-                    bg-white dark:bg-neutral-900 p-2 rounded-xl border border-slate-200 dark:border-neutral-800 shadow-xl
-                    flex items-center gap-2 z-50 animate-in fade-in slide-in-from-top-4
-                    absolute top-20 left-4 right-4 md:static md:top-auto md:left-auto md:right-auto md:w-auto md:shadow-none md:border-none md:p-1 md:bg-slate-100 md:dark:bg-neutral-900 md:rounded-lg
-                `}>
-                  <div className="flex items-center gap-2 md:gap-1 flex-1 md:flex-none justify-center">
-                    {COLORS.map(c => (
-                        <button
-                        key={c.id}
-                        onClick={() => setPenColor(c.value)}
-                        className={`w-6 h-6 md:w-5 md:h-5 rounded-full border-2 transition-transform hover:scale-110 ${penColor === c.value ? 'border-slate-600 dark:border-white scale-110' : 'border-transparent'}`}
-                        style={{ backgroundColor: c.value }}
-                        title={c.id}
-                        />
-                    ))}
-                  </div>
-                  
-                  <div className="w-px h-6 md:h-4 bg-slate-300 dark:bg-neutral-700 mx-1"></div>
-                  
-                  <div className="flex items-center gap-2 md:gap-1">
-                    {/* Eraser Tool */}
-                    <button
-                        onClick={() => setPenColor('eraser')}
-                        className={`p-2 md:p-1.5 rounded-md transition-colors ${penColor === 'eraser' ? 'bg-slate-200 dark:bg-neutral-700 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-neutral-400 hover:text-slate-800 dark:hover:text-slate-200'}`}
-                        title="Eraser"
-                    >
-                        <Eraser size={18} className="md:w-4 md:h-4" />
-                    </button>
-
-                    {/* Undo / Redo */}
-                    <button 
-                        onClick={undo}
-                        disabled={!(history[activePage] && history[activePage].length > 0)}
-                        className="p-2 md:p-1.5 text-slate-500 hover:text-slate-800 dark:text-neutral-400 dark:hover:text-white disabled:opacity-30"
-                        title="Undo"
-                    >
-                        <RotateCcw size={18} className="md:w-4 md:h-4" />
-                    </button>
-                    <button 
-                        onClick={redo}
-                        disabled={!(future[activePage] && future[activePage].length > 0)}
-                        className="p-2 md:p-1.5 text-slate-500 hover:text-slate-800 dark:text-neutral-400 dark:hover:text-white disabled:opacity-30"
-                        title="Redo"
-                    >
-                        <RotateCw size={18} className="md:w-4 md:h-4" />
-                    </button>
-
-                    {/* Clear Page Button */}
-                    <button 
-                        onClick={clearPageDrawings}
-                        className="p-2 md:p-1.5 text-slate-500 hover:text-red-500 dark:text-neutral-400 dark:hover:text-red-400"
-                        title="Clear All Drawings on Page"
-                    >
-                        <Trash2 size={18} className="md:w-4 md:h-4" />
-                    </button>
-                  </div>
-                  
-                  {/* Close/Done Button (Mobile Only) */}
-                  <div className="md:hidden ml-auto border-l border-slate-200 dark:border-neutral-700 pl-2">
+           {/* Color Palette (Visible only when drawing) */}
+           {isDrawingMode && (
+             <div className={`
+                 bg-white dark:bg-neutral-900 p-2 rounded-xl border border-slate-200 dark:border-neutral-800 shadow-xl
+                 flex items-center gap-2 z-50 animate-in fade-in slide-in-from-top-4
+                 absolute top-20 left-4 right-4 md:static md:top-auto md:left-auto md:right-auto md:w-auto md:shadow-none md:border-none md:p-1 md:bg-slate-100 md:dark:bg-neutral-900 md:rounded-lg
+             `}>
+               <div className="flex items-center gap-2 md:gap-1 flex-1 md:flex-none justify-center">
+                 {COLORS.map(c => (
                      <button
-                        onClick={() => setIsDrawingMode(false)}
-                        className="p-2 text-blue-600 dark:text-blue-400 font-medium text-xs flex items-center gap-1"
-                     >
-                        <Check size={16} /> Done
-                     </button>
-                  </div>
+                     key={c.id}
+                     onClick={() => setPenColor(c.value)}
+                     className={`w-6 h-6 md:w-5 md:h-5 rounded-full border-2 transition-transform hover:scale-110 ${penColor === c.value ? 'border-slate-600 dark:border-white scale-110' : 'border-transparent'}`}
+                     style={{ backgroundColor: c.value }}
+                     title={c.id}
+                     />
+                 ))}
+               </div>
+               
+               <div className="w-px h-6 md:h-4 bg-slate-300 dark:bg-neutral-700 mx-1"></div>
+               
+               <div className="flex items-center gap-2 md:gap-1">
+                 {/* Eraser Tool */}
+                 <button
+                     onClick={() => setPenColor('eraser')}
+                     className={`p-2 md:p-1.5 rounded-md transition-colors ${penColor === 'eraser' ? 'bg-slate-200 dark:bg-neutral-700 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-neutral-400 hover:text-slate-800 dark:hover:text-slate-200'}`}
+                     title="Eraser"
+                 >
+                     <Eraser size={18} className="md:w-4 md:h-4" />
+                 </button>
 
-                </div>
-              )}
-            </>
+                 {/* Undo / Redo */}
+                 <button 
+                     onClick={undo}
+                     disabled={!(history[activePage] && history[activePage].length > 0)}
+                     className="p-2 md:p-1.5 text-slate-500 hover:text-slate-800 dark:text-neutral-400 dark:hover:text-white disabled:opacity-30"
+                     title="Undo"
+                 >
+                     <RotateCcw size={18} className="md:w-4 md:h-4" />
+                 </button>
+                 <button 
+                     onClick={redo}
+                     disabled={!(future[activePage] && future[activePage].length > 0)}
+                     className="p-2 md:p-1.5 text-slate-500 hover:text-slate-800 dark:text-neutral-400 dark:hover:text-white disabled:opacity-30"
+                     title="Redo"
+                 >
+                     <RotateCw size={18} className="md:w-4 md:h-4" />
+                 </button>
+
+                 {/* Clear Page Button */}
+                 <button 
+                     onClick={clearPageDrawings}
+                     className="p-2 md:p-1.5 text-slate-500 hover:text-red-500 dark:text-neutral-400 dark:hover:text-red-400"
+                     title="Clear All Drawings on Page"
+                 >
+                     <Trash2 size={18} className="md:w-4 md:h-4" />
+                 </button>
+               </div>
+               
+               {/* Close/Done Button (Mobile Only) */}
+               <div className="md:hidden ml-auto border-l border-slate-200 dark:border-neutral-700 pl-2">
+                  <button
+                     onClick={() => setIsDrawingMode(false)}
+                     className="p-2 text-blue-600 dark:text-blue-400 font-medium text-xs flex items-center gap-1"
+                  >
+                     <Check size={16} /> Done
+                  </button>
+               </div>
+
+             </div>
            )}
         </div>
 
@@ -681,6 +691,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ isDarkMode, toggleTheme })
           )}
         </div>
       </div>
+      )}
 
       {/* Floating Zoom Control (Mobile/Tablet - Visible up to xl breakpoint) */}
       {file && (
@@ -719,19 +730,39 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ isDarkMode, toggleTheme })
 
       {/* Content Area */}
       <div className="flex-1 flex overflow-hidden relative">
+        {!file ? (
+             <div 
+               className="flex flex-col items-center justify-center w-full h-full bg-slate-50 dark:bg-black p-4"
+               onDragOver={(e) => e.preventDefault()}
+               onDrop={onDrop}
+             >
+                <div className="mb-12 text-center">
+                  <h1 className="text-6xl md:text-8xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 tracking-tight mb-4">
+                    Pondera
+                  </h1>
+                  <p className="text-lg text-slate-500 dark:text-slate-400">The smart way to read and understand complex papers.</p>
+                </div>
+
+                <h2 className="text-xl font-medium text-slate-700 dark:text-slate-300 mb-6">Drop a research paper to read</h2>
+                
+                <div 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full max-w-[600px] h-48 border-2 border-dashed border-slate-300 dark:border-neutral-700 rounded-xl flex items-center justify-center cursor-pointer hover:bg-slate-100 dark:hover:bg-neutral-900 transition-colors group"
+                >
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="p-4 bg-slate-100 dark:bg-neutral-800 rounded-full text-slate-400 dark:text-slate-500 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors">
+                        <UploadCloud size={32} />
+                      </div>
+                      <span className="text-sm text-slate-500 dark:text-neutral-400 font-medium">click to upload pdf</span>
+                    </div>
+                </div>
+            </div>
+        ) : (
         <div 
             className="flex-1 overflow-auto bg-slate-100 dark:bg-black relative p-4 md:p-8 transition-colors duration-300 scroll-smooth" 
             ref={containerRef}
         >
-          {!file ? (
-            <div className="flex flex-col items-center justify-center text-slate-400 h-full">
-               <div className="w-24 h-24 bg-slate-200 dark:bg-neutral-900 rounded-full flex items-center justify-center mb-6 transition-colors">
-                 <FileUp size={40} className="text-slate-400 dark:text-neutral-600" />
-               </div>
-               <h3 className="text-xl font-semibold text-slate-600 dark:text-neutral-300 mb-2">No PDF Uploaded</h3>
-               <p className="max-w-md text-center text-slate-500 dark:text-neutral-500">Upload a research paper or study notes to get started. Gemini will analyze the content and provide helpful annotations.</p>
-            </div>
-          ) : (
+          {file && (
             <div className="flex flex-col items-center gap-8 min-h-full pb-20">
               <Document
                 file={file}
@@ -857,6 +888,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ isDarkMode, toggleTheme })
             </div>
           )}
         </div>
+        )}
       </div>
     </div>
   );
