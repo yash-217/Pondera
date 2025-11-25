@@ -732,7 +732,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ isDarkMode, toggleTheme })
       <div className="flex-1 flex overflow-hidden relative">
         {!file ? (
              <div 
-               className="flex flex-col items-center justify-center w-full h-full bg-slate-50 dark:bg-black p-4"
+               className="flex flex-col items-center justify-center w-full h-full bg-slate-50 dark:bg-black p-4 relative"
                onDragOver={(e) => e.preventDefault()}
                onDrop={onDrop}
              >
@@ -747,7 +747,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ isDarkMode, toggleTheme })
                 
                 <div 
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-full max-w-[600px] h-48 border-2 border-dashed border-slate-300 dark:border-neutral-700 rounded-xl flex items-center justify-center cursor-pointer hover:bg-slate-100 dark:hover:bg-neutral-900 transition-colors group"
+                    className="w-full max-w-[600px] h-48 border-2 border-dashed border-slate-300 dark:border-neutral-700 rounded-xl flex items-center justify-center cursor-pointer hover:bg-slate-100 dark:hover:bg-neutral-900 transition-colors group z-10"
                 >
                     <div className="flex flex-col items-center gap-3">
                       <div className="p-4 bg-slate-100 dark:bg-neutral-800 rounded-full text-slate-400 dark:text-slate-500 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors">
@@ -755,6 +755,13 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ isDarkMode, toggleTheme })
                       </div>
                       <span className="text-sm text-slate-500 dark:text-neutral-400 font-medium">click to upload pdf</span>
                     </div>
+                </div>
+
+                {/* Footer */}
+                <div className="absolute bottom-8 text-center">
+                    <p className="text-sm font-medium text-slate-400 dark:text-neutral-500">
+                        # Powered by Gemini 3.0 and Nano Banana Pro
+                    </p>
                 </div>
             </div>
         ) : (

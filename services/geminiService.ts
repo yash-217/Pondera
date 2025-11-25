@@ -1,15 +1,23 @@
 import { GoogleGenAI, Type, Schema, FunctionDeclaration } from "@google/genai";
 import { Annotation } from "../types";
 
-// Initialize Gemini Client
-// Note: API KEY is managed via process.env.API_KEY as per instructions.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Helper to get the client instance safely
+// This prevents the app from crashing on load if the API key is missing from process.env
+const getAiClient = () => {
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    console.warn("Gemini API Key is missing. Please ensure process.env.API_KEY is set.");
+  }
+  // Initialize even if key is missing to prevent immediate crash; calls will fail gracefully later
+  return new GoogleGenAI({ apiKey: apiKey || "" });
+};
 
 /**
  * Analyzes a PDF page (converted to image) to find difficult concepts.
  */
 export const analyzePdfPage = async (base64Image: string): Promise<Annotation[]> => {
   try {
+    const ai = getAiClient();
     const model = "gemini-2.5-flash";
     
     const responseSchema: Schema = {
@@ -43,6 +51,7 @@ export const analyzePdfPage = async (base64Image: string): Promise<Annotation[]>
       model,
       contents: {
         parts: [
+          // Using jpeg with lower quality if previously implemented, otherwise png is fine but heavier
           { inlineData: { mimeType: "image/png", data: base64Image } },
           { text: prompt }
         ]
@@ -75,6 +84,7 @@ export const analyzePdfPage = async (base64Image: string): Promise<Annotation[]>
  */
 export const editImageWithGemini = async (base64Image: string, prompt: string, mimeType: string = "image/png"): Promise<string | null> => {
   try {
+    const ai = getAiClient();
     // Using gemini-2.5-flash-image for image editing/generation tasks as requested
     const model = "gemini-2.5-flash-image";
 
@@ -126,6 +136,7 @@ const illustrationTool: FunctionDeclaration = {
  */
 const generateImage = async (prompt: string): Promise<string | undefined> => {
   try {
+      const ai = getAiClient();
       const response = await ai.models.generateContent({
           model: 'gemini-2.5-flash-image',
           contents: { parts: [{ text: prompt }] },
@@ -147,6 +158,7 @@ const generateImage = async (prompt: string): Promise<string | undefined> => {
  */
 export const chatWithGemini = async (message: string, base64Image?: string): Promise<{ text: string; image?: string }> => {
   try {
+    const ai = getAiClient();
     const model = "gemini-2.5-flash";
     
     const parts: any[] = [{ text: message }];
